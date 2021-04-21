@@ -8,8 +8,6 @@ np.set_printoptions(threshold=np.inf)
 # a variavel base lê o arquivo 'hepatitis.csv'
 base = pd.read_csv('hepatitis.csv')
 
-print(base,'\n')
-
 # # utilizamos o método drop para excluir a linha onde houver uma '?' nas colunas presentes
 base.drop(base[base.STEROID == '?'].index, inplace=True)
 base.drop(base[base.FATIGUE == '?'].index, inplace=True)
@@ -26,9 +24,6 @@ base.drop(base[base.VARICES == '?'].index, inplace=True)
 previsores = base.iloc[:,0:13].values
 classe = base.iloc[:, 13].values
 
-print('PREVISORES\n',previsores[:5],'\n')
-print('CLASSES\n',classe,'\n')
-
 # importa métodos da biblioteca para poder transformar os valores de string em númerico
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import OneHotEncoder
@@ -40,13 +35,11 @@ oneHotEncoder = ColumnTransformer(transformers=[("OneHot", OneHotEncoder(), [2,4
 # faz a transformação dos dados em string para numéricos
 previsores= oneHotEncoder.fit_transform(previsores)
 
-print('PREVISORES TRANSFORMADOS\n',previsores[:5],'\n')
+print('previsores one hot encoder:\n', previsores[0:10,:])
 
 # o mesmo método só que para a variável classe
 LabelEncoder_classe = LabelEncoder()
 classe = LabelEncoder_classe.fit_transform(classe)
-
-print('CLASSE TRANSFORMADOS\n',classe,'\n')
 
 # importa a biblioteca de escalonamento
 from sklearn.preprocessing import StandardScaler
@@ -56,13 +49,34 @@ escalonamento= StandardScaler()
 # Após o escalonamento, é substituido os novos dados pelos antigos pela variável 'previsores'
 previsores = escalonamento.fit_transform(previsores)
 
-print('PREVISORES ESCALONADOS\n',previsores[:5],'\n')
-
 # importa o método para fazer o treinamento de máquina
 from sklearn.model_selection import train_test_split
 
 # utiliza o método para fazer o treinamento utilizando 15% para teste
 previsores_treinamento, previsores_teste, classe_treinamento, classe_teste = train_test_split(previsores,classe,test_size=0.15, random_state=0)
 
-print('Tamanho dos Previsores de Treinamento:', previsores_treinamento.shape, 'linhas - Tamanho dos Previsores de Teste:', previsores_teste.shape,'linhas')
-print('Tamanho das Classes de Treinamento:', len(classe_treinamento), 'linhas - Tamanho das Classes de Teste:', len(classe_teste),'linhas')
+# 
+# atividade anterior
+# 
+
+# importa o método de Gaussian naïve Bayes
+from sklearn.naive_bayes import GaussianNB
+
+classificador = GaussianNB()
+classificador.fit(previsores_treinamento, classe_treinamento)
+
+# Previsões calculadas em cima dos dados para teste
+
+previsoes = classificador.predict(previsores_teste)
+
+# importa o método de matriz de confusão
+from sklearn.metrics import confusion_matrix, accuracy_score
+
+# variável responsável por falar a porcentagem de acerto do algoritmo
+precisao = accuracy_score(classe_teste, previsoes)
+
+# foi atribuido a variável a matriz de confusão
+matriz= confusion_matrix(classe_teste, previsoes)
+
+print('Algoritmo de ML com % de acerto de: {}%'.format(round(100*precisao,2)))
+print('\nMatriz de erros e acertos:\n',matriz)
